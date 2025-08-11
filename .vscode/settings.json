@@ -1,0 +1,6 @@
+{
+  "python.defaultInterpreterPath": "backend/venv/bin/python3.13",
+  "python.terminal.activateEnvironment": true,
+  "python.condaPath": "",
+  "python.analysis.extraPaths": []
+}
