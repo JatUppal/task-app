@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 from config import Config
 from db import db
 import os
@@ -13,6 +14,7 @@ def create_app():
 
     # Initialize DB
     db.init_app(app)
+    JWTManager(app)
 
     @app.route("/api/health")
     def health():
@@ -31,6 +33,10 @@ def create_app():
         print("Calling db.create_all() ...")
         db.create_all()
         print("db.create_all() finished.")
+
+        from routes.auth import bp as auth_bp
+        app.register_blueprint(auth_bp, url_prefix="/api/auth")
+
 
     return app
 

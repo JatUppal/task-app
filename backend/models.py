@@ -1,5 +1,6 @@
 from datetime import datetime
 from db import db
+import bcrypt
 
 class User(db.Model):
     __tablename__ = "users"
@@ -13,6 +14,20 @@ class User(db.Model):
 
     def __repr__(self):
         return f"<User {self.email}>"
+
+    def set_password(self, raw_password: str):
+        self.password_hash = bcrypt.hashpw(
+            raw_password.encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+    
+    def check_password(self, raw_password: str) -> bool:
+        if not self.password_hash:
+            return False
+        return bcrypt.checkpw(
+            raw_password.encode("utf-8"),
+            self.password_hash.encode("utf-8")
+        )
 
 class Task(db.Model):
     __tablename__ = "tasks"
