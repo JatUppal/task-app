@@ -1,12 +1,40 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+from config import Config
+from db import db
+import os
 
-app = Flask(__name__)
-CORS(app)
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
 
-@app.route("/api/health")
-def health():
-    return jsonify({"status": "ok"})
+    # Allow requests from frontend
+    CORS(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
+
+    # Initialize DB
+    db.init_app(app)
+
+    @app.route("/api/health")
+    def health():
+        return jsonify({"status": "ok"})
+
+    with app.app_context():
+        # Debug: see where DB will be created
+        print("SQLALCHEMY_DATABASE_URI =", app.config["SQLALCHEMY_DATABASE_URI"])
+        uri = app.config["SQLALCHEMY_DATABASE_URI"]
+        if uri.startswith("sqlite:///"):
+            rel = uri.replace("sqlite:///", "")
+            abs_path = os.path.abspath(rel)
+            print("Resolved SQLite path =", abs_path)
+
+        from models import User, Task   # <-- import models here
+        print("Calling db.create_all() ...")
+        db.create_all()
+        print("db.create_all() finished.")
+
+    return app
+
+app = create_app()
 
 if __name__ == "__main__":
     app.run(debug=True)
