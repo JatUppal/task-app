@@ -10,13 +10,20 @@ def create_app():
     app.config.from_object(Config)
 
     # Allow requests from frontend
-    CORS(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173"]}},
+        supports_credentials=False,
+        allow_headers=["Content-Type", "Authorization"],
+        expose_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    )
 
     # Initialize DB
     db.init_app(app)
     JWTManager(app)
 
-    @app.route("/api/health")
+    @app.get("/api/health")
     def health():
         return jsonify({"status": "ok"})
 
