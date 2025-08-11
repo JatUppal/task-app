@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from ..db import db
-from ..models import Task
+from db import db
+from models import Task
 
 bp = Blueprint("tasks", __name__)
 
@@ -21,14 +21,14 @@ def get_owned_task_or_404(task_id: int, user_id: int) -> Task | None:
 @bp.get("/")
 @jwt_required()
 def list_tasks():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     tasks = Task.query.filter_by(user_id=user_id).order_by(Task.id.desc()).all()
     return jsonify([task_to_dict(t) for t in tasks]), 200
 
 @bp.post("/")
 @jwt_required()
 def create_task():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     data = request.get_json(silent=True) or {}
     title = (data.get("title") or "").strip()
     if not title:
@@ -42,7 +42,7 @@ def create_task():
 @bp.put("/<int:task_id>")
 @jwt_required()
 def update_task(task_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     task = get_owned_task_or_404(task_id, user_id)
     if not task:
         return jsonify({"message": "not found"}), 404
@@ -62,7 +62,7 @@ def update_task(task_id):
 @bp.delete("/<int:task_id>")
 @jwt_required()
 def delete_task(task_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     task = get_owned_task_or_404(task_id, user_id)
     if not task:
         return jsonify({"message": "not found"}), 404

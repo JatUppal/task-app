@@ -37,6 +37,9 @@ def create_app():
         from routes.auth import bp as auth_bp
         app.register_blueprint(auth_bp, url_prefix="/api/auth")
 
+        from routes.tasks import bp as tasks_bp
+        app.register_blueprint(tasks_bp, url_prefix="/api/tasks")
+
 
     return app
 
