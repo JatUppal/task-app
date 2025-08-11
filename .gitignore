@@ -10,6 +10,7 @@ frontend/node_modules/
 .env
 backend/.env
 backend/*.db
+backend/instance/
 
 # Misc
 .DS_Store
