@@ -8,6 +8,8 @@ export default function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   async function fetchTasks() {
     setErr("");
@@ -57,10 +59,48 @@ export default function Tasks() {
       setTasks(prev); // revert on failure
     }
   }
+  // enter edit mode
+  function startEdit(t) {
+    setEditingId(t.id);
+    setEditingTitle(t.title);
+  }
+
+  // cancel edit
+  function cancelEdit() {
+    setEditingId(null);
+    setEditingTitle("");
+  }
+
+  // save edit
+  async function saveEdit(id) {
+    const title = editingTitle.trim();
+    if (!title) return; // show validation
+    // optimistic update
+    const prev = tasks;
+    setTasks((p) => p.map((t) => (t.id === id ? { ...t, title } : t)));
+    setEditingId(null);
+    setEditingTitle("");
+    try {
+      await api.put(`/tasks/${id}`, { title });
+    } catch {
+      // revert on failure
+      setTasks(prev);
+    }
+  }
+
+  // keyboard handler for input
+  function onEditKeyDown(e, id) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveEdit(id);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelEdit();
+    }
+  }
 
   return (
     <div style={{ maxWidth: 720, margin: "24px auto", padding: "0 16px" }}>
-      {/* Top bar */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <h1 style={{ margin: 0 }}>My Tasks</h1>
         <button onClick={logout} style={{ padding: "6px 10px" }}>
@@ -78,30 +118,65 @@ export default function Tasks() {
       )}
 
       <ul style={{ listStyle: "none", padding: 0 }}>
-        {tasks.map((t) => (
-          <li
-            key={t.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "8px 0",
-              borderBottom: "1px solid #eee",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={!!t.done}
-              onChange={(e) => toggleDone(t.id, e.target.checked)}
-            />
-            <div style={{ flex: 1, textDecoration: t.done ? "line-through" : "none" }}>
-              {t.title}
-            </div>
-            <button onClick={() => deleteTask(t.id)} style={{ padding: "4px 8px" }}>
-              Delete
-            </button>
-          </li>
-        ))}
+        {tasks.map((t) => {
+          const isEditing = editingId === t.id;
+          return (
+            <li
+              key={t.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "8px 0",
+                borderBottom: "1px solid #eee",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={!!t.done}
+                onChange={(e) => toggleDone(t.id, e.target.checked)}
+              />
+
+              {/* TITLE / EDIT INPUT */}
+              <div style={{ flex: 1 }}>
+                {isEditing ? (
+                  <input
+                    autoFocus
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    onKeyDown={(e) => onEditKeyDown(e, t.id)}
+                    style={{ width: "100%", padding: 6 }}
+                  />
+                ) : (
+                  <span style={{ textDecoration: t.done ? "line-through" : "none" }}>
+                    {t.title}
+                  </span>
+                )}
+              </div>
+
+              {/* NEW: Edit/Save/Cancel + existing Delete */}
+              {isEditing ? (
+                <>
+                  <button onClick={() => saveEdit(t.id)} style={{ padding: "4px 8px" }}>
+                    Save
+                  </button>
+                  <button onClick={cancelEdit} style={{ padding: "4px 8px" }}>
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => startEdit(t)} style={{ padding: "4px 8px" }}>
+                    Edit
+                  </button>
+                  <button onClick={() => deleteTask(t.id)} style={{ padding: "4px 8px" }}>
+                    Delete
+                  </button>
+                </>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
