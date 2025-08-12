@@ -14,6 +14,24 @@ export function AuthProvider({ children }) {
     else localStorage.removeItem("token");
   }, [token]);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function validateToken() {
+      if (!token) return;
+      try {
+        // hit a backend endpoint that confirms token validity
+        await api.get("/auth/me");
+      } catch {
+        if (!cancelled) {
+          setToken(null);
+          setUser(null);
+        }
+      }
+    }
+    validateToken();
+    return () => { cancelled = true; };
+  }, [token]);
+
   async function login(email, password) {
     setAuthError(null);
     try {

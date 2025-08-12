@@ -18,6 +18,7 @@ def get_owned_task_or_404(task_id: int, user_id: int) -> Task | None:
     # Return None if not found OR not owned (avoid leaking existence)
     return Task.query.filter_by(id=task_id, user_id=user_id).first()
 
+@bp.get("")
 @bp.get("/")
 @jwt_required()
 def list_tasks():
@@ -25,6 +26,7 @@ def list_tasks():
     tasks = Task.query.filter_by(user_id=user_id).order_by(Task.id.desc()).all()
     return jsonify([task_to_dict(t) for t in tasks]), 200
 
+@bp.post("")
 @bp.post("/")
 @jwt_required()
 def create_task():

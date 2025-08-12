@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from db import db
 from models import User
 
@@ -29,9 +29,14 @@ def register():
 
 @bp.post("/login")
 def login():
-    data = request.get_json(silent=True) or {}
+    # parse JSON safely and always return something
+    try:
+        data = request.get_json(force=True) or {}
+    except Exception:
+        return jsonify({"message": "invalid JSON"}), 400
+
     email = _normalize_email(data.get("email"))
-    password = data.get("password", "")
+    password = data.get("password") or ""
 
     if not email or not password:
         return jsonify({"message": "email and password are required"}), 400
@@ -42,3 +47,15 @@ def login():
 
     token = create_access_token(identity=str(user.id))
     return jsonify({"access_token": token}), 200
+
+    
+# validate token & return the current user
+@bp.get("/me")
+@jwt_required()
+def me():
+    uid = get_jwt_identity()            # this is the same identity in create_access_token
+    user = User.query.get(int(uid))     # optional: look up details
+    if not user:
+        return jsonify({"message": "user not found"}), 404
+    # keep it simple—frontend just needs to know token is valid
+    return jsonify({"user": {"id": user.id, "email": user.email}}), 200
