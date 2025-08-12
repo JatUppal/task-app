@@ -48,13 +48,41 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // register -> then log in
+  async function register(email, password) {
+    setAuthError(null);
+    try {
+      await api.post("/auth/register", { email, password });
+      // auto-login after successful signup
+      return await login(email, password);
+    } catch (err) {
+      const msg = err?.response?.data?.message || "Sign up failed";
+      setAuthError(msg);
+      return false;
+    }
+  }
+
   function logout() {
     setToken(null);
     setUser(null);
   }
 
+  // auto-logout on 401 globally
+  useEffect(() => {
+    const id = api.interceptors.response.use(
+      (res) => res,
+      (error) => {
+        if (error?.response?.status === 401) {
+          logout();
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => api.interceptors.response.eject(id);
+  }, [token]); // reattach when token changes
+
   const value = useMemo(
-    () => ({ user, token, isAuthed, authError, login, logout }),
+    () => ({ user, token, isAuthed, authError, login, register, logout }),
     [user, token, isAuthed, authError]
   );
 

@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
-  const { login, authError } = useAuth();
+  const { login, register, authError } = useAuth();
   const navigate = useNavigate();
+  const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -12,14 +13,35 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
     setSubmitting(true);
-    const ok = await login(email, password);
+    const ok = mode === "signin"
+      ? await login(email, password)
+      : await register(email, password);
     setSubmitting(false);
     if (ok) navigate("/tasks", { replace: true });
   }
 
   return (
     <div style={{ maxWidth: 360, margin: "64px auto", padding: 16 }}>
-      <h1 style={{ marginBottom: 16 }}>Sign in</h1>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        <button
+          type="button"
+          onClick={() => setMode("signin")}
+          disabled={mode === "signin"}
+          style={{ padding: "6px 10px" }}
+        >
+          Sign in
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("signup")}
+          disabled={mode === "signup"}
+          style={{ padding: "6px 10px" }}
+        >
+          Sign up
+        </button>
+      </div>
+
+      <h1 style={{ marginBottom: 16 }}>{mode === "signin" ? "Sign in" : "Create your account"}</h1>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 12 }}>
           <label style={{ display: "block", marginBottom: 4 }}>Email</label>
@@ -53,7 +75,9 @@ export default function Login() {
           disabled={submitting}
           style={{ padding: "8px 12px", width: "100%" }}
         >
-          {submitting ? "Signing in..." : "Sign in"}
+          {submitting
+            ? mode === "signin" ? "Signing in…" : "Creating account…"
+            : mode === "signin" ? "Sign in" : "Sign up"}
         </button>
       </form>
     </div>

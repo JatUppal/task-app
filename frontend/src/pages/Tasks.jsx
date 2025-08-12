@@ -21,7 +21,6 @@ export default function Tasks() {
         }
         setErr("Failed to load tasks");
     } finally {
-        console.log("[Tasks] fetchTasks finally setLoading(false)"); // <— add
         setLoading(false);
     }
   }
@@ -60,14 +59,21 @@ export default function Tasks() {
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: "32px auto", padding: "0 16px" }}>
-      <h1 style={{ marginBottom: 12 }}>My Tasks</h1>
+    <div style={{ maxWidth: 720, margin: "24px auto", padding: "0 16px" }}>
+      {/* Top bar */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <h1 style={{ margin: 0 }}>My Tasks</h1>
+        <button onClick={logout} style={{ padding: "6px 10px" }}>
+          Logout
+        </button>
+      </div>
+
       <TaskForm onCreate={createTask} />
 
       {loading && <div>Loading…</div>}
       {err && <div style={{ color: "crimson", marginBottom: 12 }}>{err}</div>}
 
-      {!loading && !err && tasks.length === 0 && (
+      {!loading && tasks.length === 0 && (
         <div style={{ color: "#666" }}>No tasks yet. Add your first one!</div>
       )}
 
